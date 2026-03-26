@@ -1,0 +1,104 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ds2api": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "DS2API",
+      "options": {
+        "baseURL": "https://daniellenguyen-ds2api.hf.space/v1",
+        "apiKey": "your-ds2api-key"
+      },
+      "models": {
+        "deepseek-chat": {
+          "name": "DeepSeek Chat"
+        },
+        "deepseek-reasoner": {
+          "name": "DeepSeek Reasoner"
+        },
+        "deepseek-chat-search": {
+          "name": "DeepSeek Chat Search"
+        },
+        "deepseek-reasoner-search": {
+          "name": "DeepSeek Reasoner Search"
+        }
+      }
+    },
+    "opencode": {
+      "name": "OpenCode Zen",
+      "npm": "@opencode/ai-provider",
+      "models": {
+        "big-pickle": {
+          "name": "OpenCode Zen / Big Pickle"
+        },
+        "minimax-m2.5-free": {
+          "name": "OpenCode Zen / MiniMax M2.5 Free"
+        }
+      }
+    }
+  },
+  "model": "ds2api/deepseek-reasoner",
+  "small_model": "opencode/minimax-m2.5-free",
+  "scheme_c": {
+    "display_groups": [
+      {
+        "name": "Presets",
+        "items": [
+          "Sisyphus",
+          "Atlas",
+          "Hephaestus",
+          "Prometheus"
+        ]
+      },
+      {
+        "name": "Custom",
+        "items": [
+          "Custom"
+        ]
+      }
+    ],
+    "workflows": {
+      "Sisyphus": {
+        "provider": "ds2api",
+        "model": "deepseek-reasoner",
+        "fallback_models": [
+          "ds2api/deepseek-reasoner-search",
+          "opencode/big-pickle"
+        ]
+      },
+      "Atlas": {
+        "provider": "ds2api",
+        "model": "deepseek-chat",
+        "fallback_models": [
+          "ds2api/deepseek-chat-search",
+          "opencode/minimax-m2.5-free"
+        ]
+      },
+      "Hephaestus": {
+        "provider": "ds2api",
+        "model": "deepseek-reasoner",
+        "fallback_models": [
+          "ds2api/deepseek-chat",
+          "opencode/big-pickle"
+        ]
+      },
+      "Prometheus": {
+        "provider": "ds2api",
+        "model": "deepseek-reasoner-search",
+        "fallback_models": [
+          "ds2api/deepseek-reasoner",
+          "opencode/big-pickle"
+        ]
+      },
+      "Custom": {
+        "provider": "user-selected",
+        "model": "user-selected",
+        "fallback_models": []
+      }
+    },
+    "rules": {
+      "custom_overrides_presets": true,
+      "custom_must_be_provider_aware": true,
+      "do_not_silently_fallback_from_custom": true
+    }
+  }
+}
