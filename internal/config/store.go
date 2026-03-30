@@ -41,6 +41,11 @@ func loadConfig() (Config, bool, error) {
 	if rawCfg != "" {
 		cfg, err := parseConfigString(rawCfg)
 		if err != nil {
+			if !IsVercel() && envWritebackEnabled() {
+				if fileCfg, fileErr := loadConfigFromFile(ConfigPath()); fileErr == nil {
+					return fileCfg, false, nil
+				}
+			}
 			return cfg, true, err
 		}
 		cfg.ClearAccountTokens()
@@ -66,7 +71,7 @@ func loadConfig() (Config, bool, error) {
 		return cfg, true, err
 	}
 
-	content, err := os.ReadFile(ConfigPath())
+	cfg, err := loadConfigFromFile(ConfigPath())
 	if err != nil {
 		if IsVercel() {
 			// Vercel one-click deploy may start without a writable/present config file.
@@ -75,21 +80,29 @@ func loadConfig() (Config, bool, error) {
 		}
 		return Config{}, false, err
 	}
-	var cfg Config
-	if err := json.Unmarshal(content, &cfg); err != nil {
-		return Config{}, false, err
-	}
-	cfg.DropInvalidAccounts()
-	if strings.Contains(string(content), `"test_status"`) && !IsVercel() {
-		if b, err := json.MarshalIndent(cfg, "", "  "); err == nil {
-			_ = os.WriteFile(ConfigPath(), b, 0o644)
-		}
-	}
 	if IsVercel() {
 		// Vercel filesystem is ephemeral/read-only for runtime writes; avoid save errors.
 		return cfg, true, nil
 	}
 	return cfg, false, nil
+}
+
+func loadConfigFromFile(path string) (Config, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return Config{}, err
+	}
+	var cfg Config
+	if err := json.Unmarshal(content, &cfg); err != nil {
+		return Config{}, err
+	}
+	cfg.DropInvalidAccounts()
+	if strings.Contains(string(content), `"test_status"`) && !IsVercel() {
+		if b, err := json.MarshalIndent(cfg, "", "  "); err == nil {
+			_ = os.WriteFile(path, b, 0o644)
+		}
+	}
+	return cfg, nil
 }
 
 func (s *Store) Snapshot() Config {

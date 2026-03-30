@@ -22,7 +22,8 @@ func stripLeakedContentFilterSuffix(text string) string {
 	if text == "" {
 		return text
 	}
-	idx := strings.Index(strings.ToUpper(text), "CONTENT_FILTER")
+	upperText := strings.ToUpper(text)
+	idx := strings.Index(upperText, "CONTENT_FILTER")
 	if idx < 0 {
 		return text
 	}
