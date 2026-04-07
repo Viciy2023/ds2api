@@ -390,6 +390,7 @@ data: [DONE]
 ## Claude 兼容接口
 
 除标准路径 `/anthropic/v1/*` 外，还支持快捷路径 `/v1/messages`、`/messages`、`/v1/messages/count_tokens`、`/messages/count_tokens`。
+实现上统一走 OpenAI Chat Completions 解析与回译链路，避免多套解析逻辑分叉维护。
 
 ### `GET /anthropic/v1/models`
 
@@ -524,6 +525,7 @@ data: {"type":"message_stop"}
 - `/v1/models/{model}:streamGenerateContent`（兼容路径）
 
 鉴权方式同业务接口（`Authorization: Bearer <token>` 或 `x-api-key`）。
+实现上统一走 OpenAI Chat Completions 解析与回译链路，避免多套解析逻辑分叉维护。
 
 ### `POST /v1beta/models/{model}:generateContent`
 

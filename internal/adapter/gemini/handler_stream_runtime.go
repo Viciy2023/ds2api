@@ -67,7 +67,6 @@ type geminiStreamRuntime struct {
 
 	thinking     strings.Builder
 	text         strings.Builder
-	promptTokens int
 	outputTokens int
 }
 
@@ -112,9 +111,6 @@ func (s *geminiStreamRuntime) sendChunk(payload map[string]any) {
 func (s *geminiStreamRuntime) onParsed(parsed sse.LineResult) streamengine.ParsedDecision {
 	if !parsed.Parsed {
 		return streamengine.ParsedDecision{}
-	}
-	if parsed.PromptTokens > 0 {
-		s.promptTokens = parsed.PromptTokens
 	}
 	if parsed.OutputTokens > 0 {
 		s.outputTokens = parsed.OutputTokens
@@ -202,6 +198,6 @@ func (s *geminiStreamRuntime) finalize() {
 			},
 		},
 		"modelVersion":  s.model,
-		"usageMetadata": buildGeminiUsage(s.finalPrompt, finalThinking, finalText, s.promptTokens, s.outputTokens),
+		"usageMetadata": buildGeminiUsage(s.finalPrompt, finalThinking, finalText, s.outputTokens),
 	})
 }

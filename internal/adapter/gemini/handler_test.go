@@ -296,32 +296,6 @@ func TestGenerateContentOpenAIProxyErrorUsesGeminiEnvelope(t *testing.T) {
 	}
 }
 
-func TestBuildGeminiUsageOverridesPromptAndOutputTokensWhenProvided(t *testing.T) {
-	usage := buildGeminiUsage("prompt", "thinking", "answer", 11, 29)
-	if got, _ := usage["promptTokenCount"].(int); got != 11 {
-		t.Fatalf("expected promptTokenCount=11, got %#v", usage["promptTokenCount"])
-	}
-	if got, _ := usage["candidatesTokenCount"].(int); got != 29 {
-		t.Fatalf("expected candidatesTokenCount=29, got %#v", usage["candidatesTokenCount"])
-	}
-	if got, _ := usage["totalTokenCount"].(int); got != 40 {
-		t.Fatalf("expected totalTokenCount=40, got %#v", usage["totalTokenCount"])
-	}
-}
-
-func TestBuildGeminiUsageFallsBackToEstimateWhenNoUpstreamUsage(t *testing.T) {
-	usage := buildGeminiUsage("abcdef", "", "ghijkl", 0, 0)
-	if got, _ := usage["promptTokenCount"].(int); got <= 0 {
-		t.Fatalf("expected positive promptTokenCount estimate, got %#v", usage["promptTokenCount"])
-	}
-	if got, _ := usage["candidatesTokenCount"].(int); got <= 0 {
-		t.Fatalf("expected positive candidatesTokenCount estimate, got %#v", usage["candidatesTokenCount"])
-	}
-	if got, _ := usage["totalTokenCount"].(int); got <= 0 {
-		t.Fatalf("expected positive totalTokenCount estimate, got %#v", usage["totalTokenCount"])
-	}
-}
-
 func extractGeminiSSEFrames(t *testing.T, body string) []map[string]any {
 	t.Helper()
 	scanner := bufio.NewScanner(strings.NewReader(body))

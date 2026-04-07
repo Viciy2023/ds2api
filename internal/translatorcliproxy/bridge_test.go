@@ -26,6 +26,26 @@ func TestFromOpenAINonStreamClaude(t *testing.T) {
 	}
 }
 
+func TestFromOpenAINonStreamClaudePreservesUsageFromOpenAI(t *testing.T) {
+	original := []byte(`{"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}],"stream":false}`)
+	translatedReq := []byte(`{"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}],"stream":false}`)
+	openaibody := []byte(`{"id":"chatcmpl_1","object":"chat.completion","created":1,"model":"claude-sonnet-4-5","choices":[{"index":0,"message":{"role":"assistant","content":"hello"},"finish_reason":"stop"}],"usage":{"prompt_tokens":11,"completion_tokens":29,"total_tokens":40}}`)
+	got := string(FromOpenAINonStream(sdktranslator.FormatClaude, "claude-sonnet-4-5", original, translatedReq, openaibody))
+	if !strings.Contains(got, `"input_tokens":11`) || !strings.Contains(got, `"output_tokens":29`) {
+		t.Fatalf("expected claude usage to preserve prompt/completion tokens, got: %s", got)
+	}
+}
+
+func TestFromOpenAINonStreamGeminiPreservesUsageFromOpenAI(t *testing.T) {
+	original := []byte(`{"contents":[{"role":"user","parts":[{"text":"hi"}]}]}`)
+	translatedReq := []byte(`{"model":"gemini-2.5-pro","messages":[{"role":"user","content":"hi"}],"stream":false}`)
+	openaibody := []byte(`{"id":"chatcmpl_1","object":"chat.completion","created":1,"model":"gemini-2.5-pro","choices":[{"index":0,"message":{"role":"assistant","content":"hello"},"finish_reason":"stop"}],"usage":{"prompt_tokens":11,"completion_tokens":29,"total_tokens":40}}`)
+	got := string(FromOpenAINonStream(sdktranslator.FormatGemini, "gemini-2.5-pro", original, translatedReq, openaibody))
+	if !strings.Contains(got, `"promptTokenCount":11`) || !strings.Contains(got, `"candidatesTokenCount":29`) || !strings.Contains(got, `"totalTokenCount":40`) {
+		t.Fatalf("expected gemini usageMetadata to preserve prompt/completion tokens, got: %s", got)
+	}
+}
+
 func TestParseFormatAliases(t *testing.T) {
 	cases := map[string]sdktranslator.Format{
 		"responses":        sdktranslator.FormatOpenAIResponse,
