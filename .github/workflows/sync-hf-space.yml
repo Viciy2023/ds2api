@@ -1,0 +1,60 @@
+name: Sync Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-hf-space
+  cancel-in-progress: true
+
+jobs:
+  sync-space:
+    runs-on: ubuntu-latest
+    env:
+      HF_SPACE_REPO: DanielleNguyen/Ds2Api
+      HF_SPACE_BRANCH: main
+      HF_TOKEN: ${{ secrets.HFTOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate sync source and token
+        run: |
+          set -euo pipefail
+          test -d huggingface-HFDeepSeek
+          if [ -z "${HF_TOKEN}" ]; then
+            echo "GitHub secret HFTOKEN is not configured." >&2
+            exit 1
+          fi
+
+      - name: Clone Hugging Face Space
+        run: |
+          set -euo pipefail
+          git clone "https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}" hf-space
+
+      - name: Mirror deploy package into Space root
+        run: |
+          set -euo pipefail
+          rsync -av --delete --exclude '.git/' huggingface-HFDeepSeek/ hf-space/
+
+      - name: Commit and push changes
+        working-directory: hf-space
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet --exit-code && [ -z "$(git status --short)" ]; then
+            echo "No Hugging Face Space changes to push."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "chore: sync from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+          git push origin "${HF_SPACE_BRANCH}"
