@@ -94,13 +94,17 @@ ds2api_<tag>_linux_arm64.tar.gz
 
 这和仓库当前的 release 工作流命名完全一致。
 
-官方压缩包预期包含：
+官方压缩包至少应包含：
 
 - `ds2api`
 - `config.example.json`
 - `.env.example`
-- `sha3_wasm_bg.7b9ca65ddd.wasm`
 - `static/admin`
+
+说明：
+
+- `static/admin` 仍然是 HF 镜像启动管理端所必需的静态资源目录
+- `sha3_wasm_bg*.wasm` 仅对旧版 release 兼容保留；从 `v3.2.0` 开始，上游已切换为原生 Go PoW，实现上不再要求 release 包必须携带该文件
 
 当前方案不再在 `start.sh` 中动态下载或源码构建，运行时直接启动 Docker 镜像中已经准备好的 `ds2api` 二进制。
 

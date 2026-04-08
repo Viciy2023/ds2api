@@ -34,10 +34,9 @@ RUN arch="$(dpkg --print-architecture)" \
     && mkdir -p /tmp/ds2api-release /opt/ds2api \
     && curl -fL --retry 3 --retry-delay 2 -o "/tmp/${archive_name}" "${archive_url}" \
     && tar -xzf "/tmp/${archive_name}" -C /tmp/ds2api-release \
-    && extracted_dir="/tmp/ds2api-release/ds2api_${resolved_tag}_linux_${ds2_arch}" \
+    && extracted_dir="$(find /tmp/ds2api-release -mindepth 1 -maxdepth 1 -type d | head -n 1)" \
     && test -d "${extracted_dir}" \
     && test -f "${extracted_dir}/ds2api" \
-    && test -f "${extracted_dir}/sha3_wasm_bg.7b9ca65ddd.wasm" \
     && test -f "${extracted_dir}/static/admin/index.html" \
     && cp -R "${extracted_dir}/." /opt/ds2api/ \
     && chmod +x /opt/ds2api/ds2api \

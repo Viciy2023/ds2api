@@ -198,6 +198,48 @@ fail() {
   exit 1
 }
 
+find_optional_wasm_path() {
+  local candidate=""
+  for candidate in \
+    "${INSTALL_DIR}/sha3_wasm_bg.7b9ca65ddd.wasm" \
+    "${INSTALL_DIR}/sha3_wasm_bg.wasm"
+  do
+    if [ -f "${candidate}" ]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+
+  candidate="$(find "${INSTALL_DIR}" -maxdepth 2 -type f -name 'sha3_wasm_bg*.wasm' 2>/dev/null | head -n 1 || true)"
+  if [ -n "${candidate}" ] && [ -f "${candidate}" ]; then
+    printf '%s\n' "${candidate}"
+    return 0
+  fi
+
+  return 1
+}
+
+find_static_admin_dir() {
+  local candidate=""
+  for candidate in \
+    "${INSTALL_DIR}/static/admin" \
+    "${INSTALL_DIR}/admin"
+  do
+    if [ -f "${candidate}/index.html" ]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+
+  candidate="$(find "${INSTALL_DIR}" -maxdepth 3 -type f -path '*/admin/index.html' 2>/dev/null | head -n 1 || true)"
+  if [ -n "${candidate}" ]; then
+    dirname "${candidate}"
+    return 0
+  fi
+
+  return 1
+}
+
 write_config_from_env_if_needed() {
   mkdir -p "$(dirname "${DS2API_CONFIG_PATH}")"
 
@@ -244,14 +286,28 @@ main() {
   write_config_from_env_if_needed
 
   if [ -z "${DS2API_STATIC_ADMIN_DIR:-}" ]; then
-    export DS2API_STATIC_ADMIN_DIR="${INSTALL_DIR}/static/admin"
+    if detected_static_admin_dir="$(find_static_admin_dir)"; then
+      export DS2API_STATIC_ADMIN_DIR="${detected_static_admin_dir}"
+    else
+      export DS2API_STATIC_ADMIN_DIR="${INSTALL_DIR}/static/admin"
+    fi
   fi
   if [ -z "${DS2API_WASM_PATH:-}" ]; then
-    export DS2API_WASM_PATH="${INSTALL_DIR}/sha3_wasm_bg.7b9ca65ddd.wasm"
+    if detected_wasm_path="$(find_optional_wasm_path)"; then
+      export DS2API_WASM_PATH="${detected_wasm_path}"
+    fi
   fi
 
   [ -x "${INSTALL_DIR}/ds2api" ] || fail "ds2api binary missing after installation"
-  [ -f "${DS2API_WASM_PATH}" ] || fail "wasm asset missing at ${DS2API_WASM_PATH}"
+  [ -f "${DS2API_STATIC_ADMIN_DIR}/index.html" ] || fail "admin static files missing at ${DS2API_STATIC_ADMIN_DIR}"
+
+  if [ -n "${DS2API_WASM_PATH:-}" ]; then
+    [ -f "${DS2API_WASM_PATH}" ] || fail "configured wasm asset missing at ${DS2API_WASM_PATH}"
+    log "using optional wasm asset: ${DS2API_WASM_PATH}"
+  else
+    log "no wasm asset detected; continuing with native PoW support"
+  fi
+  log "using admin static dir: ${DS2API_STATIC_ADMIN_DIR}"
 
   log "starting DS2API on 0.0.0.0:${PORT}"
   "${INSTALL_DIR}/ds2api" &
