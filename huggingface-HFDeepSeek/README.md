@@ -1,5 +1,5 @@
 ---
-title: DS2API HFDeep
+title: DeepSeek2Api
 emoji: 🚀
 colorFrom: blue
 colorTo: indigo
