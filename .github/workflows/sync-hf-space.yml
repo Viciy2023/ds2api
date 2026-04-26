@@ -17,7 +17,7 @@ jobs:
   sync-space:
     runs-on: ubuntu-latest
     env:
-      HF_SPACE_REPO: DanielleNguyen/Ds2Api
+      HF_SPACE_REPO: DanielleNguyen/DeepSeek2Api
       HF_SPACE_BRANCH: main
       HF_TOKEN: ${{ secrets.HF_TOKEN || secrets.HFTOKEN }}
     steps:

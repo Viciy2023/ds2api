@@ -16,8 +16,8 @@ app_port: 7860
 - 在 Hugging Face **Docker Space** 上以 `7860` 端口启动 DS2API
 - **在 Docker 构建阶段预装官方 GitHub 最新 Release 构建产物**：`https://github.com/CJackHwang/ds2api/releases`
 - 支持 `DS2API_CONFIG_JSON`，方便你把配置放进 **HF Secrets**
-- 支持可选持久化配置文件路径 `/data/config.json`
-- 支持可选 **HF Bucket 持久化同步**：启动恢复 `/data`，运行中自动回写
+- 以 HF 挂载的 `/data` 作为唯一持久化路径
+- 默认开启 `DS2API_ENV_WRITEBACK=1`，首次引导后自动切到文件持久化模式
 
 ## Hugging Face 重要说明
 
@@ -44,6 +44,8 @@ Hugging Face 会从**仓库根目录**的 `README.md` 读取 Docker Space 元数
 - `LOG_LEVEL=INFO`
 - `DS2API_AUTO_BUILD_WEBUI=false`
 - `DS2API_RELEASE_TAG=latest`
+- `DS2API_CONFIG_PATH=/data/config.json`
+- `DS2API_ENV_WRITEBACK=1`
 
 ## 配置策略
 
@@ -56,32 +58,18 @@ Hugging Face 会从**仓库根目录**的 `README.md` 读取 Docker Space 元数
 
 这是最适合 HF 的方式，因为 DS2API 原生支持 env-backed config（环境变量配置）。
 
-### 可选方式：持久化文件配置
+### 推荐方式：挂载 `/data` 文件持久化
 
 如果你的 Space 已经挂载持久化存储到 `/data`，建议保留：
 
 ```text
 DS2API_CONFIG_PATH=/data/config.json
+DS2API_ENV_WRITEBACK=1
 ```
 
 启动脚本会在第一次启动时，如果 `/data/config.json` 不存在，就把 `DS2API_CONFIG_JSON` 写入该文件。
 
-### 可选方式：HF Bucket 持久化
-
-如果你使用 Hugging Face Bucket 作为持久化存储，可以额外设置：
-
-```text
-HF_TOKEN=<你的HF访问令牌>
-HF_BUCKET_REPO=DanielleNguyen/DS2Api
-```
-
-启用后，启动脚本会：
-
-1. 启动时先从 HF Bucket 恢复 `/data`
-2. 如果 `/data` 中的文件有变化，后台监听器会自动推送到 Bucket
-3. 即使没有监听到事件，也会每 5 分钟执行一次兜底同步
-
-这适合把 `/data/config.json` 等运行期文件持久化到 HF Bucket。
+之后 DS2API 会在管理台保存时直接写回 `DS2API_CONFIG_PATH`，因为 HF 已经把持久化存储挂载到 `/data`，所以重启后仍会保留。
 
 ## Release 构建产物逻辑
 
@@ -129,19 +117,19 @@ ds2api_<tag>_linux_arm64.tar.gz
 
 如果 `/healthz` 正常但 `/admin` 打不开，通常说明安装回退过程有问题，或者静态资源没有准备好。
 
-## Bucket 持久化说明
+## 持久化说明
 
-如果你启用了 HF Bucket 同步：
+当前部署方案只依赖 HF Space 已挂载的 `/data` 持久化目录：
 
-- `/data` 会在启动时优先从 Bucket 恢复
-- 运行过程中，`/data` 变化会被自动同步回 Bucket
-- `config.json` 的推荐路径仍然是：
+- `config.json` 推荐路径：
 
 ```text
 DS2API_CONFIG_PATH=/data/config.json
 ```
 
-这样你在管理台更新后的配置更容易被保留下来。
+- 首次启动可通过 `DS2API_CONFIG_JSON` 引导生成配置文件
+- 后续管理台改动会写回 `/data/config.json`
+- 只要 HF Space 的挂载存储仍然存在，重启后配置不会丢失
 
 ## 说明
 

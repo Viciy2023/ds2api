@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LOG_LEVEL=INFO \
     DS2API_AUTO_BUILD_WEBUI=false \
     DS2API_CONFIG_PATH=/data/config.json \
+    DS2API_ENV_WRITEBACK=1 \
     DS2API_RELEASE_REPO=CJackHwang/ds2api \
     DS2API_RELEASE_TAG=latest \
     DS2API_ARCH=auto
@@ -17,12 +18,10 @@ RUN apt-get update \
         curl \
         git \
         python3 \
-        python3-pip \
         tar \
         gzip \
         xz-utils \
         file \
-    && python3 -m pip install --no-cache-dir --break-system-packages "huggingface_hub>=0.23.0" "watchdog>=4.0.0" \
     && rm -rf /var/lib/apt/lists/*
 
 RUN arch="$(dpkg --print-architecture)" \
